@@ -24,9 +24,4 @@
 		<ProjectReference Include="..\BD.WTTS.Client.Android.ReverseProxy\BD.WTTS.Client.Android.ReverseProxy.csproj" />
 	</ItemGroup>
 
-	<ItemGroup>
-		<PackageReference Include="Xamarin.AndroidX.Core" Version="1.13.1.4" />
-		<PackageReference Include="Xamarin.Google.Android.Material" Version="1.11.0.3" />
-	</ItemGroup>
-
 </Project>
