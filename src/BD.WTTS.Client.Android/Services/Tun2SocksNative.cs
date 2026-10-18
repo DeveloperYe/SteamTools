@@ -1,51 +1,73 @@
-using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace BD.WTTS.Android;
 
 /// <summary>
-/// libtun2socks.so 的 P/Invoke 封装。
-/// native 侧导出：
-///   int tun2socks_start(int tun_fd, const char* proxy_host, int proxy_port, const char* proxy_type);
-///   void tun2socks_stop(void);
+/// tun2socks 运行器（xjasonlyu/tun2socks v2.7.0，Go 静态二进制）。
+/// 打包方式：将 linux-arm64/amd64 二进制重命名为 libtun2socks.so 放入
+/// jniLibs/arm64-v8a 与 jniLibs/x86_64，安装后位于 nativeLibraryDir，可执行。
 /// </summary>
-public static unsafe class Tun2SocksNative
+public static class Tun2SocksNative
 {
-    const string Lib = "tun2socks";
-
-    [DllImport(Lib, EntryPoint = "tun2socks_start")]
-    static extern int StartNative(int tunFd, byte* proxyHost, int proxyPort, byte* proxyType);
-
-    [DllImport(Lib, EntryPoint = "tun2socks_stop")]
-    static extern void StopNative();
+    const string Tag = "Tun2Socks";
+    static Process? _process;
 
     public static void Start(int tunFd, string proxyHost, int proxyPort, string proxyType)
     {
-        var h = AllocUtf8(proxyHost);
-        var t = AllocUtf8(proxyType);
-        try
+        var ctx = global::Android.App.Application.Context;
+        var libDir = ctx.ApplicationInfo!.NativeLibraryDir;
+        var bin = Path.Combine(libDir!, "libtun2socks.so");
+        if (!File.Exists(bin))
+            throw new FileNotFoundException("libtun2socks.so not in nativeLibraryDir", bin);
+
+        // tun2socks 需要 TUN fd 以 /dev/tun 形式访问：通过 /proc/self/fd/<fd> 传入
+        var proxyUrl = proxyType switch
         {
-            var code = StartNative(tunFd, h, proxyPort, t);
-            if (code != 0)
-                throw new Exception($"tun2socks_start failed: {code}");
-        }
-        finally
+            "http" => $"http://{proxyHost}:{proxyPort}",
+            "socks5" => $"socks5://{proxyHost}:{proxyPort}",
+            _ => $"socks5://{proxyHost}:{proxyPort}",
+        };
+
+        var psi = new ProcessStartInfo(bin)
         {
-            Marshal.FreeHGlobal((nint)h);
-            Marshal.FreeHGlobal((nint)t);
-        }
+            UseShellExecute = false,
+            RedirectStandardError = true,
+            RedirectStandardOutput = true,
+        };
+        psi.ArgumentList.Add("-device");
+        psi.ArgumentList.Add($"fd:{tunFd}");
+        psi.ArgumentList.Add("-proxy");
+        psi.ArgumentList.Add(proxyUrl);
+        psi.ArgumentList.Add("-loglevel");
+        psi.ArgumentList.Add("info");
+
+        _process = Process.Start(psi) ?? throw new Exception("Failed to start tun2socks");
+        _process.ErrorDataReceived += (_, e) =>
+        {
+            if (!string.IsNullOrEmpty(e.Data))
+                global::Android.Util.Log.Info(Tag, e.Data);
+        };
+        _process.BeginErrorReadLine();
+        _process.OutputDataReceived += (_, e) =>
+        {
+            if (!string.IsNullOrEmpty(e.Data))
+                global::Android.Util.Log.Info(Tag, e.Data);
+        };
+        _process.BeginOutputReadLine();
     }
 
     public static void Stop()
     {
-        try { StopNative(); } catch { /* 库缺失时忽略 */ }
-    }
-
-    static byte* AllocUtf8(string s)
-    {
-        var bytes = System.Text.Encoding.UTF8.GetBytes(s);
-        var p = (byte*)Marshal.AllocHGlobal(bytes.Length + 1);
-        Marshal.Copy(bytes, 0, (nint)p, bytes.Length);
-        p[bytes.Length] = 0;
-        return p;
+        try
+        {
+            if (_process != null && !_process.HasExited)
+                _process.Kill();
+        }
+        catch { }
+        finally
+        {
+            _process?.Dispose();
+            _process = null;
+        }
     }
 }

@@ -18,13 +18,28 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
-      - name: Setup .NET 10 (SDK with android workload)
+      - name: Setup .NET 11 (per global.json)
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: |
+            11.0.x
+            10.0.x
 
       - name: Install Android workload
         run: dotnet workload install android
+
+      - name: Download tun2socks binaries
+        run: |
+          mkdir -p src/BD.WTTS.Client.Android/jniLibs/arm64-v8a src/BD.WTTS.Client.Android/jniLibs/x86_64
+          curl -sL -o /tmp/t2s-arm64.zip https://github.com/xjasonlyu/tun2socks/releases/download/v2.7.0/tun2socks-linux-arm64.zip
+          curl -sL -o /tmp/t2s-x64.zip  https://github.com/xjasonlyu/tun2socks/releases/download/v2.7.0/tun2socks-linux-amd64.zip
+          cd /tmp && unzip -o t2s-arm64.zip && unzip -o t2s-x64.zip
+          find /tmp -name 'tun2socks' -type f
+          cp /tmp/tun2socks-linux-arm64/tun2socks src/BD.WTTS.Client.Android/jniLibs/arm64-v8a/libtun2socks.so || true
+          cp /tmp/tun2socks-linux-amd64/tun2socks src/BD.WTTS.Client.Android/jniLibs/x86_64/libtun2socks.so || true
+          # fallback: zip 解压在 /tmp 根
+          [ -f src/BD.WTTS.Client.Android/jniLibs/arm64-v8a/libtun2socks.so ] || find /tmp -maxdepth 3 -name tun2socks -type f | head -2 | while read f; do file "$f" | grep -q aarch64 && cp "$f" src/BD.WTTS.Client.Android/jniLibs/arm64-v8a/libtun2socks.so || cp "$f" src/BD.WTTS.Client.Android/jniLibs/x86_64/libtun2socks.so; done
+          ls -la src/BD.WTTS.Client.Android/jniLibs/*/
 
       - name: Restore
         run: dotnet restore src/BD.WTTS.Client.Android/BD.WTTS.Client.Android.csproj
