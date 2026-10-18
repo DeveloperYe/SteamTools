@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net10.0-android</TargetFramework>
+		<TargetFramework>net11.0-android</TargetFramework>
 		<SupportedOSPlatformVersion>24</SupportedOSPlatformVersion>
 		<OutputType>Exe</OutputType>
 		<RootNamespace>BD.WTTS.Android</RootNamespace>
@@ -22,6 +22,11 @@
 	<ItemGroup>
 		<!-- 反代核心：Android 拼装版（stub 掉 IPC，进程内运行） -->
 		<ProjectReference Include="..\BD.WTTS.Client.Android.ReverseProxy\BD.WTTS.Client.Android.ReverseProxy.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- 版本由 ref/DirectoryPackages CPM 统一管理 -->
+		<PackageReference Include="Xamarin.AndroidX.AppCompat" />
 	</ItemGroup>
 
 </Project>
