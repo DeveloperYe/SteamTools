@@ -12,7 +12,7 @@
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<Nullable>disable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
-		<DefineConstants>APP_REVERSE_PROXY;ANDROID_PORT;REMOVE_DNS_INTERCEPT;NONE_UI;$(DefineConstants)</DefineConstants>
+		<DefineConstants>APP_REVERSE_PROXY;ANDROID_PORT;REMOVE_DNS_INTERCEPT;NONE_UI;LIB_CLIENT_IPC;__NOT_IMPORT_COMMON_SERVICES__;__NOT_IMPORT_COMMON_PRIMITIVES__;__NOT_IMPORT_CONFIGURATION__;$(DefineConstants)</DefineConstants>
 		<NoWarn>$(NoWarn);CA1416;CS8632;CS1998</NoWarn>
 		<EnableDefaultCompileItems>false</EnableDefaultCompileItems>
 	</PropertyGroup>
@@ -25,9 +25,17 @@
 		<Compile Include="..\BD.WTTS.Client.Plugins.Accelerator.ReverseProxy\Services.Implementation\**\*.cs" LinkBase="Services.Implementation" />
 		<Compile Include="..\BD.WTTS.Client.Plugins.Accelerator.ReverseProxy\Extensions\**\*.cs" LinkBase="Extensions" />
 
+		<!-- === 上游 BD.WTTS.Client.IPC 工程（跨平台纯 C#，保留真实 IPC 类型供编译） === -->
+		<Compile Include="..\BD.WTTS.Client.IPC\**\*.cs" LinkBase="IPC" />
+		<Compile Include="..\BD.WTTS.Client\Services\IPC\IPCSubProcessModuleService.cs" LinkBase="Services" />
+		<Compile Include="..\BD.WTTS.Client\Services\Platform\IPC\*.cs" LinkBase="Services\Platform" />
+		<Compile Include="..\BD.WTTS.Client\Services\UI\Widgets\IPC\*.cs" LinkBase="Services\UI\Widgets" />
+		<Compile Include="..\BD.WTTS.Client\Enums\CommandExitCode.cs" LinkBase="Enums" />
+
 		<!-- === 上游共享源文件 === -->
 		<Compile Include="..\AssemblyInfo.Constants.cs" LinkBase="Properties" />
 		<Compile Include="..\ImplicitUsings.MessagePack.cs" LinkBase="Properties" />
+		<Compile Include="..\ImplicitUsings.JsonProperty.cs" LinkBase="Properties" />
 		<Compile Include="..\ImplicitUsings.Services.cs" LinkBase="Properties" />
 		<Compile Include="..\ImplicitUsings.MSEX.cs" LinkBase="Properties" />
 		<Compile Include="..\ImplicitUsings.Nito.cs" LinkBase="Properties" />
@@ -51,9 +59,13 @@
 	<ItemGroup>
 		<ProjectReference Include="..\..\ref\Common\src\BD.Common.Repositories.SQLitePCL\BD.Common.Repositories.SQLitePCL.csproj" />
 		<ProjectReference Include="..\..\ref\Common\src\BD.Common\BD.Common.csproj" />
+		<ProjectReference Include="..\..\ref\dotnetCampus.Ipc\src\dotnetCampus.Ipc.Analyzers\dotnetCampus.Ipc.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+		<ProjectReference Include="..\..\ref\dotnetCampus.Ipc\src\dotnetCampus.Ipc\dotnetCampus.Ipc.csproj" />
 		<ProjectReference Include="..\..\ref\WTTS.MicroServices.ClientSDK\src\BD.WTTS.MicroServices.Primitives.Models\BD.WTTS.MicroServices.Primitives.Models.csproj" />
 		<PackageReference Include="NLog" />
+		<PackageReference Include="NLog.Extensions.Logging" />
 		<PackageReference Include="NLog.Web.AspNetCore" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Console" />
 		<PackageReference Include="System.Linq.Async" />
 		<PackageReference Include="Ae.DNS.Client" />
 		<PackageReference Include="DNS" />
