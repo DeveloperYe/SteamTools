@@ -26,4 +26,9 @@
 		<PackageReference Include="Microsoft.Extensions.Logging.Console" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<!-- 传递依赖带入的 AspNetCore FrameworkReference 在 Android 无 runtime pack，移除 -->
+		<FrameworkReference Remove="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
 </Project>
