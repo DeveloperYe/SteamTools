@@ -108,7 +108,7 @@ public class WattVpnService : Android.Net.VpnService
 
     void CreateNotificationChannel()
     {
-        if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
+        if (Build.VERSION.SdkInt >= global::Android.OS.BuildVersionCodes.O)
         {
             var channel = new NotificationChannel(ChannelId, "加速服务", NotificationImportance.Low);
             var nm = GetSystemService(NotificationService) as NotificationManager;
