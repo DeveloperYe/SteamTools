@@ -83,3 +83,32 @@ src/BD.WTTS.Client.Plugins.Accelerator.ReverseProxy/
 | 用户证书信任：Android 7+ 应用默认不信任用户 CA | 仅加速域名走「伪证书」路径；非加速流量不劫持 TLS。加速生效范围=用户在 UI 勾选的域名 |
 | IPC 子进程模型在 Android 不适用 | 单进程内直接 new YarpReverseProxyServiceImpl + 手工 DI，绕过 dotnetCampus.Ipc |
 | Xamarin 遗留代码不兼容 net9.0-android | 不复用 ST.Client.Android 遗留工程，全新 net9.0-android 工程只引用需要的库 |
+
+---
+
+## 实施结果（2026-10-19）
+
+CI: `.github/workflows/android-build.yml` → [DeveloperYe/SteamTools/actions](https://github.com/DeveloperYe/SteamTools/actions/workflows/android-build.yml)
+产物: `watt-android-apk` artifact（net.steampp.watt.android.apk，约 46MB，含 arm64-v8a / x86_64 + libtun2socks.so）
+
+### 最终架构（与初版设计的差异）
+
+Android 无 `Microsoft.AspNetCore.App` runtime pack，上游 Kestrel/Yarp 反代**无法**在 Android 运行。
+因此最终方案放弃「进程内跑上游反代」，改为纯 BCL 自研代理：
+
+```
+tun2socks(xjasonlyu v2.7.0, Go 静态二进制打包为 libtun2socks.so)
+   └─ HTTP CONNECT → WattProxyServer (TcpListener :26501, 纯 BCL)
+        ├─ 加速域名(内置 Steam/GitHub/Pixiv 表) → DoH(RFC8484, alidns/doh.pub) 解析真实 IP → TCP 直连（修复 DNS 污染）
+        └─ 其他域名 → 系统解析直连透传
+```
+
+- 不做 TLS MITM（Android 用户证书信任限制大），因此无需安装根证书，MainActivity 的证书按钮保留为占位。
+- 上游复用资产：AccelerateProjectDTO 数据模型、域名通配格式（MatchDomainNames）、DoH 端点选择思想、tun2socks 对接设计（上游 ProxyService.Operate.cs 中 Android VPN 模式钩子同款思路）。
+- 拼装库 `BD.WTTS.Client.Android.ReverseProxy`（net11.0 纯 BCL）保留 DTO/枚举/WattProxyServer，供后续扩展（如接入上游完整加速项配置源）。
+
+### 待办（后续迭代）
+- [ ] 加速域名列表从上游配置源动态加载
+- [ ] UI 换正式界面（域名勾选/流量统计/日志）
+- [ ] tun2socks 分应用白名单（AddAllowedApplication）
+- [ ] Release keystore 签名
