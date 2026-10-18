@@ -2,6 +2,7 @@ using Android.App;
 using Android.Content;
 using Android.OS;
 using Android.Widget;
+using AToast = Android.Widget.Toast;
 
 namespace WattToolkit;
 
@@ -20,7 +21,8 @@ public class MainActivity : Activity
         base.OnCreate(savedInstanceState);
 
         // 极简布局：状态文本 + 开关按钮 + 证书安装按钮（后续再换正式 UI）
-        var layout = new LinearLayout(this) { Orientation = Orientation.Vertical, SetPadding(48, 96, 48, 48) };
+        var layout = new LinearLayout(this) { Orientation = Orientation.Vertical };
+        layout.SetPadding(48, 96, 48, 48);
 
         _status = new TextView(this) { TextSize = 18 };
         _status.SetPadding(0, 0, 0, 32);
@@ -38,7 +40,7 @@ public class MainActivity : Activity
         UpdateUi();
     }
 
-    void OnToggleClick(object? sender, EventArgs e)
+    void OnToggleClick(object? sender, System.EventArgs e)
     {
         if (!_running)
         {
@@ -58,7 +60,7 @@ public class MainActivity : Activity
         }
     }
 
-    void OnInstallCertClick(object? sender, EventArgs e)
+    void OnInstallCertClick(object? sender, System.EventArgs e)
     {
         // 从 CertificateManager 导出 CA 证书并调起系统安装
         try
@@ -66,16 +68,16 @@ public class MainActivity : Activity
             var certBytes = ReverseProxyHost.GetRootCertificateDer();
             if (certBytes == null)
             {
-                Toast.MakeText(this, "证书尚未生成，先开启一次加速", ToastLength.Long)?.Show();
+                AToast.MakeText(this, "证书尚未生成，先开启一次加速", ToastLength.Long)?.Show();
                 return;
             }
             var install = Android.Security.KeyChain.CreateInstallIntent();
             install.PutExtra(Android.Security.KeyChain.ExtraCertificate, certBytes);
             StartActivity(install);
         }
-        catch (Exception ex)
+        catch (System.Exception ex)
         {
-            Toast.MakeText(this, ex.Message, ToastLength.Long)?.Show();
+            AToast.MakeText(this, ex.Message, ToastLength.Long)?.Show();
         }
     }
 

@@ -1,4 +1,11 @@
-using System.Reflection;
+using AActivity = Android.App.Activity;
+using AToast = Android.Widget.Toast;
+using global::BD.WTTS;
+using global::BD.WTTS.Models;
+using global::BD.WTTS.Services;
+using global::BD.WTTS.Services.Implementation;
+using Microsoft.Extensions.DependencyInjection;
+using NLog;
 
 namespace WattToolkit;
 
@@ -15,7 +22,7 @@ public static class ReverseProxyHost
     /// <summary>
     /// 启动反代（VPN 模式 = Kestrel ListenHttpProxy @ 0.0.0.0:26501）
     /// </summary>
-    public static async Task StartAsync(ProxyMode mode)
+    public static async Task StartAsync(global::BD.WTTS.Enums.ProxyMode mode)
     {
         await _gate.WaitAsync();
         try
@@ -31,46 +38,46 @@ public static class ReverseProxyHost
                     {
                         services.AddLogging(l =>
                         {
-                            l.AddSimpleConsole(o => { o.SingleLine = true; });
+                            l.AddConsole();
                         });
-                        services.AddSingleton<IPCSubProcessService>(AndroidIPCSubProcessService.Instance);
-                        services.AddSingleton<IPCPlatformService>(AndroidPlatformService.Instance);
+                        services.AddSingleton<IPCSubProcessService>(AndroidIpcStubs.AndroidIPCSubProcessService.Instance);
+                        services.AddSingleton<IPCPlatformService>(AndroidIpcStubs.AndroidPlatformService.Instance);
                         services.AddDnsAnalysisService();
                         services.AddReverseProxyService();
                         services.AddSingleton<ICertificateManager, CertificateManagerImpl>();
                     });
 
-                    var impl = Ioc.Get<YarpReverseProxyServiceImpl>();
+                    IReverseProxyService impl = Ioc.Get<YarpReverseProxyServiceImpl>();
 
                     var settings = new ReverseProxySettings(
                         GetAccelerateProjects(),
-                        scripts: null,
-                        isEnableScript: false,
-                        isOnlyWorkSteamBrowser: false,
-                        proxyPort: 26501,
-                        proxyIp: "0.0.0.0",
-                        proxyMode: mode,
-                        isProxyGOG: false,
-                        onlyEnableProxyScript: false,
-                        enableHttpProxyToHttps: false,
-                        socks5ProxyEnable: false,
-                        socks5ProxyPortId: 26502,
-                        twoLevelAgentEnable: false,
-                        twoLevelAgentProxyType: ExternalProxyType.Socks5,
-                        twoLevelAgentIp: null,
-                        twoLevelAgentPortId: 0,
-                        twoLevelAgentUserName: null,
-                        twoLevelAgentPassword: null,
-                        proxyDNS: null,
-                        isSupportIpv6: false,
-                        useDoh: true,
-                        customDohAddres: null,
-                        proxyToken: null);
+                        null,                       // scripts
+                        false,                      // isEnableScript
+                        false,                      // isOnlyWorkSteamBrowser
+                        26501,                      // proxyPort
+                        "0.0.0.0",                  // proxyIp
+                        mode,                       // proxyMode
+                        false,                      // isProxyGOG
+                        false,                      // onlyEnableProxyScript
+                        false,                      // enableHttpProxyToHttps
+                        false,                      // socks5ProxyEnable
+                        26502,                      // socks5ProxyPortId
+                        false,                      // twoLevelAgentEnable
+                        ExternalProxyType.Socks5,   // twoLevelAgentProxyType
+                        null,                       // twoLevelAgentIp
+                        0,                          // twoLevelAgentPortId
+                        null,                       // twoLevelAgentUserName
+                        null,                       // twoLevelAgentPassword
+                        null,                       // proxyDNS
+                        false,                      // isSupportIpv6
+                        true,                       // useDoh
+                        null,                       // customDohAddres
+                        null);                      // proxyToken
 
                     var result = await impl.StartProxyAsync(Serializable.SMP2(settings));
                     global::Android.Util.Log.Info(Tag, $"StartProxy: {result.Code}");
                 }
-                catch (Exception ex)
+                catch (System.Exception ex)
                 {
                     global::Android.Util.Log.Error(Tag, ex.ToString());
                 }
@@ -87,10 +94,10 @@ public static class ReverseProxyHost
     {
         try
         {
-            var impl = Ioc.Get<YarpReverseProxyServiceImpl>();
+            IReverseProxyService impl = Ioc.Get<YarpReverseProxyServiceImpl>();
             await impl.StopProxyAsync();
         }
-        catch (Exception ex)
+        catch (System.Exception ex)
         {
             global::Android.Util.Log.Warn(Tag, $"StopProxy: {ex.Message}");
         }
@@ -110,7 +117,7 @@ public static class ReverseProxyHost
             var cert = new System.Security.Cryptography.X509Certificates.X509Certificate2(bytes);
             return cert.Export(System.Security.Cryptography.X509Certificates.X509ContentType.Cert);
         }
-        catch (Exception ex)
+        catch (System.Exception ex)
         {
             global::Android.Util.Log.Error(Tag, ex.ToString());
             return null;

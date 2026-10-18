@@ -1,8 +1,7 @@
 using Android.App;
 using Android.Content;
-using Android.Net;
 using Android.OS;
-using Java.Lang;
+using Android.Widget;
 using Service = Android.App.Service;
 
 namespace WattToolkit;
@@ -32,20 +31,20 @@ public class WattVpnService : Android.Net.VpnService
         var notification = new Notification.Builder(this, ChannelId)
             .SetContentTitle("Watt Toolkit")
             .SetContentText("网络加速运行中")
-            .SetSmallIcon(Resource.Drawable.ic_dialog_info)
+            .SetSmallIcon(Android.Resource.Drawable.IcDialogInfo)
             .SetOngoing(true)
             .Build();
         StartForeground(NotifId, notification);
 
         // 1) 启动进程内反代（Kestrel HTTP 代理 @127.0.0.1:26501）
-        _ = ReverseProxyHost.StartAsync(ProxyMode.VPN);
+        _ = ReverseProxyHost.StartAsync(global::BD.WTTS.Enums.ProxyMode.VPN);
 
         // 2) 建立 TUN 并用 tun2socks 把流量转发到本地代理
         try
         {
             StartTun();
         }
-        catch (Exception ex)
+        catch (System.Exception ex)
         {
             global::Android.Util.Log.Error(Tag, ex.ToString());
             StopSelf();
@@ -56,20 +55,21 @@ public class WattVpnService : Android.Net.VpnService
 
     void StartTun()
     {
-        var builder = new Builder()
+        var builder = new Builder(this)
             .SetSession("Watt Toolkit Accelerator")
             .SetMtu(1500)
             .AddAddress("26.26.26.1", 24)
-            .AddDnsServer("26.26.26.2")
-            // 排除自身 App，避免回环
-            .AddDisallowedApplication(PackageName);
+            .AddDnsServer("26.26.26.2");
+
+        // 排除自身 App，避免回环
+        builder.AddDisallowedApplication(PackageName!);
 
         // 劫持全部 IPv4 默认路由（分段 1/1 + 128/1 覆盖 0.0.0.0/0）
         builder.AddRoute("0.0.0.0", 1);
         builder.AddRoute("128.0.0.0", 1);
 
         _tunInterface = builder.Establish()
-            ?? throw new Exception("Establish() 返回 null：VPN 权限被拒绝");
+            ?? throw new System.Exception("Establish() 返回 null：VPN 权限被拒绝");
 
         global::Android.Util.Log.Info(Tag, "TUN established");
         StartTun2Socks(_tunInterface);
@@ -77,13 +77,13 @@ public class WattVpnService : Android.Net.VpnService
 
     void StartTun2Socks(ParcelFileDescriptor tun)
     {
-        // native libtun2socks.so：tun fd → 127.0.0.1:26501 (HTTP 代理)
+        // tun2socks 独立进程：tun fd → 127.0.0.1:26501 (HTTP 代理)
         var fd = tun.DetachFd();
         try
         {
             Tun2SocksNative.Start(fd, "127.0.0.1", 26501, "http");
         }
-        catch (Exception ex)
+        catch (System.Exception ex)
         {
             global::Android.Util.Log.Error(Tag, $"tun2socks start failed: {ex}");
         }

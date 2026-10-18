@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 
 // ReSharper disable once CheckNamespace
 namespace BD.WTTS.Services;
+// stub 类放在独立子命名空间避免与上游冲突
 
 /// <summary>
 /// Android 平台服务：IPCPlatformService 的本机直连实现。
@@ -121,5 +122,27 @@ public sealed class AndroidPlatformService : IPCPlatformService
         }
         catch { }
         return string.Empty;
+    }
+}
+
+/// <summary>
+/// IPCSubProcessService 的 Android 单进程 stub：
+/// GetService&lt;T&gt;() 无法返回真实 IPC 代理，返回 null。
+/// </summary>
+public sealed class AndroidIPCSubProcessService : IPCSubProcessService
+{
+    public static readonly AndroidIPCSubProcessService Instance = new();
+
+    Task IPCSubProcessService.RunAsync(string moduleName, TaskCompletionSource tcs, string pipeName,
+        Action<dotnetCampus.Ipc.IpcProvider>? configureIpcProvider)
+    {
+        tcs.TrySetResult();
+        return Task.CompletedTask;
+    }
+
+    T? IPCSubProcessService.GetService<T>() where T : class => null;
+
+    void IDisposable.Dispose()
+    {
     }
 }
