@@ -134,7 +134,7 @@ public sealed class AndroidIPCSubProcessService : IPCSubProcessService
     public static readonly AndroidIPCSubProcessService Instance = new();
 
     Task IPCSubProcessService.RunAsync(string moduleName, TaskCompletionSource tcs, string pipeName,
-        Action<dotnetCampus.Ipc.IpcProvider>? configureIpcProvider)
+        Action<dotnetCampus.Ipc.Pipes.IpcProvider>? configureIpcProvider)
     {
         tcs.TrySetResult();
         return Task.CompletedTask;
