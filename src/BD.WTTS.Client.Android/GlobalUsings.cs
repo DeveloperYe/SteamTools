@@ -4,6 +4,7 @@ global using BD.WTTS;
 global using BD.WTTS.Models;
 global using BD.WTTS.Services;
 global using BD.WTTS.Services.Implementation;
+global using BD.WTTS.Enums;
 global using Microsoft.Extensions.DependencyInjection;
 global using NLog;
 

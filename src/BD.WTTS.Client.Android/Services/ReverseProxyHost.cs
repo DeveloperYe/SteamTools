@@ -38,16 +38,16 @@ public static class ReverseProxyHost
                     {
                         services.AddLogging(l =>
                         {
-                            l.AddConsole();
+                            
                         });
-                        services.AddSingleton<IPCSubProcessService>(AndroidIpcStubs.AndroidIPCSubProcessService.Instance);
-                        services.AddSingleton<IPCPlatformService>(AndroidIpcStubs.AndroidPlatformService.Instance);
+                        services.AddSingleton<IPCSubProcessService>(AndroidIPCSubProcessService.Instance);
+                        services.AddSingleton<IPCPlatformService>(AndroidPlatformService.Instance);
                         services.AddDnsAnalysisService();
                         services.AddReverseProxyService();
                         services.AddSingleton<ICertificateManager, CertificateManagerImpl>();
                     });
 
-                    IReverseProxyService impl = Ioc.Get<YarpReverseProxyServiceImpl>();
+                    IReverseProxyService impl = Ioc.Get<IReverseProxyService>();
 
                     var settings = new ReverseProxySettings(
                         GetAccelerateProjects(),
@@ -94,7 +94,7 @@ public static class ReverseProxyHost
     {
         try
         {
-            IReverseProxyService impl = Ioc.Get<YarpReverseProxyServiceImpl>();
+            IReverseProxyService impl = Ioc.Get<IReverseProxyService>();
             await impl.StopProxyAsync();
         }
         catch (System.Exception ex)

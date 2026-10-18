@@ -3,6 +3,7 @@ using Android.Content;
 using Android.OS;
 using Android.Widget;
 using AToast = Android.Widget.Toast;
+using AToastLength = Android.Widget.ToastLength;
 
 namespace WattToolkit;
 
@@ -68,7 +69,7 @@ public class MainActivity : Activity
             var certBytes = ReverseProxyHost.GetRootCertificateDer();
             if (certBytes == null)
             {
-                AToast.MakeText(this, "证书尚未生成，先开启一次加速", ToastLength.Long)?.Show();
+                AToast.MakeText(this, "证书尚未生成，先开启一次加速", AToastLength.Long)?.Show();
                 return;
             }
             var install = Android.Security.KeyChain.CreateInstallIntent();
@@ -77,7 +78,7 @@ public class MainActivity : Activity
         }
         catch (System.Exception ex)
         {
-            AToast.MakeText(this, ex.Message, ToastLength.Long)?.Show();
+            AToast.MakeText(this, ex.Message, AToastLength.Long)?.Show();
         }
     }
 
