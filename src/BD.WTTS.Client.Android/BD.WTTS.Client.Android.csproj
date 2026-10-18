@@ -24,9 +24,4 @@
 		<ProjectReference Include="..\BD.WTTS.Client.Android.ReverseProxy\BD.WTTS.Client.Android.ReverseProxy.csproj" />
 	</ItemGroup>
 
-	<ItemGroup>
-		<!-- 版本由 ref/DirectoryPackages CPM 统一管理 -->
-		<PackageReference Include="Xamarin.AndroidX.AppCompat" />
-	</ItemGroup>
-
 </Project>
