@@ -1,9 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<!--
-	  Android 专用反代类库：拼装上游 ReverseProxy 的核心实现文件，
-	  排除 IPC 子进程模型 / WinDivert / AppCenter / Windows 专属代码，
-	  平台依赖(IPCPlatformService 等)由本工程的 Android stub 提供。
+	  Android 加速核心库（纯 BCL，无 ASP.NET Core 依赖——Android 无 AspNetCore runtime pack）。
+	  提供加速域名数据、DoH/DNS 解析、以及 WattProxyServer(TcpListener HTTP CONNECT 代理+分流)。
 	-->
 	<PropertyGroup>
 		<TargetFramework>net11.0</TargetFramework>
@@ -12,74 +11,40 @@
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<Nullable>disable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
-		<DefineConstants>APP_REVERSE_PROXY;ANDROID_PORT;REMOVE_DNS_INTERCEPT;NONE_UI;LIB_CLIENT_IPC;__NOT_IMPORT_COMMON_SERVICES__;__NOT_IMPORT_COMMON_PRIMITIVES__;__NOT_IMPORT_CONFIGURATION__;$(DefineConstants)</DefineConstants>
+		<DefineConstants>ANDROID_PORT;REMOVE_DNS_INTERCEPT;NONE_UI;LIB_CLIENT_IPC;__NOT_IMPORT_COMMON_SERVICES__;__NOT_IMPORT_COMMON_PRIMITIVES__;__NOT_IMPORT_CONFIGURATION__;$(DefineConstants)</DefineConstants>
 		<NoWarn>$(NoWarn);CA1416;CS8632;CS1998</NoWarn>
 		<EnableDefaultCompileItems>false</EnableDefaultCompileItems>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<!-- === 核心服务接口与实现（来自上游 ReverseProxy 工程）=== -->
+		<!-- === 加速数据模型与枚举 === -->
 		<Compile Include="..\BD.WTTS.Client.Plugins.Accelerator.ReverseProxy\Enums\**\*.cs" LinkBase="Enums" />
-		<Compile Include="..\BD.WTTS.Client.Plugins.Accelerator.ReverseProxy\Models\**\*.cs" LinkBase="Models" />
-		<Compile Include="..\BD.WTTS.Client.Plugins.Accelerator.ReverseProxy\Services\**\*.cs" LinkBase="Services" />
-		<Compile Include="..\BD.WTTS.Client.Plugins.Accelerator.ReverseProxy\Services.Implementation\**\*.cs" LinkBase="Services.Implementation" />
-		<Compile Include="..\BD.WTTS.Client.Plugins.Accelerator.ReverseProxy\Extensions\**\*.cs" LinkBase="Extensions" />
+		<Compile Include="..\BD.WTTS.Client.Plugins.Accelerator.ReverseProxy\Models\FlowStatistics.cs" LinkBase="Models" />
+		<Compile Include="..\BD.WTTS.Client.Plugins.Accelerator\Enums\ProxyMode.cs" LinkBase="Enums" />
 
-		<!-- === 上游 BD.WTTS.Client.IPC 工程（跨平台纯 C#，保留真实 IPC 类型供编译） === -->
-		<!-- 排除 IPC 的 ToastLength.cs：与 BD.Common.Toast 的同名类型冲突（App 工程用后者） -->
-		<Compile Include="..\BD.WTTS.Client.IPC\**\*.cs" LinkBase="IPC" Exclude="..\BD.WTTS.Client.IPC\Enums\ToastLength.cs" />
-		<Compile Include="..\BD.WTTS.Client\Services\IPC\IPCSubProcessModuleService.cs" LinkBase="Services" />
-		<Compile Include="..\BD.WTTS.Client\Services\Platform\IPC\*.cs" LinkBase="Services\Platform" />
-		<Compile Include="..\BD.WTTS.Client\Services\UI\Widgets\IPC\*.cs" LinkBase="Services\UI\Widgets" />
-		<Compile Include="..\BD.WTTS.Client\Enums\CommandExitCode.cs" LinkBase="Enums" />
+		<!-- === DNS/DoH 解析（纯 BCL） === -->
+		<Compile Include="..\BD.WTTS.Client.Plugins.Accelerator.ReverseProxy\Services\INet\**\*.cs" LinkBase="Services" />
+		<Compile Include="..\BD.WTTS.Client.Plugins.Accelerator.ReverseProxy\Services\Net\**\*.cs" LinkBase="Services\Net" />
+		<Compile Include="..\BD.WTTS.Client.Plugins.Accelerator.ReverseProxy\Services.Implementation\Net\**\*.cs" LinkBase="Services.Implementation\Net" />
+		<Compile Include="..\BD.WTTS.Client.Plugins.Accelerator.ReverseProxy\Services.Implementation\DomainResolver.cs" LinkBase="Services.Implementation" />
 
-		<!-- === 上游共享源文件 === -->
+		<!-- === 共享源文件（裁剪） === -->
 		<Compile Include="..\AssemblyInfo.Constants.cs" LinkBase="Properties" />
 		<Compile Include="..\ImplicitUsings.MessagePack.cs" LinkBase="Properties" />
-		<Compile Include="..\ImplicitUsings.JsonProperty.cs" LinkBase="Properties" />
-		<Compile Include="..\ImplicitUsings.Services.cs" LinkBase="Properties" />
-		<Compile Include="..\ImplicitUsings.MSEX.cs" LinkBase="Properties" />
-		<Compile Include="..\ImplicitUsings.Nito.cs" LinkBase="Properties" />
 		<Compile Include="..\ImplicitUsings.Models.cs" LinkBase="Properties" />
 		<Compile Include="..\ImplicitUsings.Enums.cs" LinkBase="Properties" />
 		<Compile Include="..\ImplicitUsings.NLog.cs" LinkBase="Properties" />
-		<Compile Include="..\ImplicitUsings.AspNetCore.cs" LinkBase="Properties" />
-		<Compile Include="..\BD.WTTS.Client\Constants\CertificateConstants.cs" LinkBase="Constants" />
-		<Compile Include="..\BD.WTTS.Client\Services\Mvvm\LogConsoleService.Logger.cs" LinkBase="Services\Mvvm" />
-		<Compile Include="..\BD.WTTS.Client.Plugins.Accelerator\Enums\ProxyMode.cs" LinkBase="Enums" />
-		<Compile Include="..\OSShuttingDownHelper\**\*.cs" LinkBase="OSShuttingDownHelper" />
 
-		<!-- === Android 平台 stub（本工程）=== -->
-		<Compile Include="Stubs\**\*.cs" LinkBase="Stubs" />
+		<!-- === WattProxy 代理服务器（本工程，纯 BCL） === -->
+		<Compile Include="WattProxy\**\*.cs" LinkBase="WattProxy" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<FrameworkReference Include="Microsoft.AspNetCore.App" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<ProjectReference Include="..\..\ref\Common\src\BD.Common.Repositories.SQLitePCL\BD.Common.Repositories.SQLitePCL.csproj" />
 		<ProjectReference Include="..\..\ref\Common\src\BD.Common\BD.Common.csproj" />
-		<ProjectReference Include="..\..\ref\Common\src\BD.Common.Toast\BD.Common.Toast.csproj" />
-		<ProjectReference Include="..\..\ref\Common\src\BD.Common.Essentials\BD.Common.Essentials.csproj" />
-		<ProjectReference Include="..\..\ref\Common\src\BD.Common.Essentials.Primitives\BD.Common.Essentials.Primitives.csproj" />
-		<ProjectReference Include="..\..\ref\Common\src\BD.Common.Essentials.Utils\BD.Common.Essentials.Utils.csproj" />
-		<ProjectReference Include="..\..\ref\dotnetCampus.Ipc\src\dotnetCampus.Ipc.Analyzers\dotnetCampus.Ipc.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-		<ProjectReference Include="..\..\ref\dotnetCampus.Ipc\src\dotnetCampus.Ipc\dotnetCampus.Ipc.csproj" />
 		<ProjectReference Include="..\..\ref\WTTS.MicroServices.ClientSDK\src\BD.WTTS.MicroServices.Primitives.Models\BD.WTTS.MicroServices.Primitives.Models.csproj" />
 		<PackageReference Include="NLog" />
-		<PackageReference Include="NLog.Extensions.Logging" />
-		<PackageReference Include="NLog.Web.AspNetCore" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Console" />
-		<PackageReference Include="System.Linq.Async" />
-		<PackageReference Include="Ae.DNS.Client" />
-		<PackageReference Include="DNS" />
 		<PackageReference Include="DnsClient" />
-		<PackageReference Include="Yarp.ReverseProxy" />
-		<PackageReference Include="System.Drawing.Common" />
-		<PackageReference Include="System.Runtime.Caching" />
-		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
-		<PackageReference Include="Utf8StringInterpolation" />
+		<PackageReference Include="Ae.DNS.Client" />
 	</ItemGroup>
 
 </Project>

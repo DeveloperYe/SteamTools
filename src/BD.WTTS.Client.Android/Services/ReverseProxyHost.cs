@@ -1,133 +1,83 @@
-using AActivity = Android.App.Activity;
 using AToast = Android.Widget.Toast;
-using global::BD.WTTS;
-using global::BD.WTTS.Models;
-using global::BD.WTTS.Services;
-using global::BD.WTTS.Services.Implementation;
-using Microsoft.Extensions.DependencyInjection;
-using NLog;
 
 namespace WattToolkit;
 
 /// <summary>
-/// 在 Android 单进程内直接运行上游 YarpReverseProxyServiceImpl 的适配层。
-/// 通过 AndroidIPCSubProcessService stub 绕过 dotnetCampus.Ipc 子进程模型。
+/// 在 Android 上运行 WattProxyServer（轻量 HTTP CONNECT 代理 + DoH 分流）。
+/// 架构说明见 docs/android-port-design.md：Android 无 ASP.NET Core runtime pack，
+/// 无法运行上游 Kestrel 反代，改为自写 TcpListener 代理复用上游加速域名数据与分流思想。
 /// </summary>
 public static class ReverseProxyHost
 {
     const string Tag = "ReverseProxyHost";
-    static Task? _startTask;
-    static readonly SemaphoreSlim _gate = new(1, 1);
 
     /// <summary>
-    /// 启动反代（VPN 模式 = Kestrel ListenHttpProxy @ 0.0.0.0:26501）
+    /// 启动加速代理（VPN 模式，监听 0.0.0.0:26501 供 tun2socks 转发）
     /// </summary>
-    public static async Task StartAsync(global::BD.WTTS.Enums.ProxyMode mode)
+    public static Task StartAsync(global::BD.WTTS.Enums.ProxyMode mode)
     {
-        await _gate.WaitAsync();
         try
         {
-            if (_startTask != null) return;
-
-            _startTask = Task.Run(async () =>
-            {
-                try
-                {
-                    // 初始化 Ioc（上游代码大量使用 Ioc.Get<T>）
-                    Ioc.ConfigureServices(services =>
-                    {
-                        services.AddLogging(l =>
-                        {
-                            
-                        });
-                        services.AddSingleton<IPCSubProcessService>(AndroidIPCSubProcessService.Instance);
-                        services.AddSingleton<IPCPlatformService>(AndroidPlatformService.Instance);
-                        services.AddDnsAnalysisService();
-                        services.AddReverseProxyService();
-                        services.AddSingleton<ICertificateManager, CertificateManagerImpl>();
-                    });
-
-                    IReverseProxyService impl = Ioc.Get<IReverseProxyService>();
-
-                    var settings = new ReverseProxySettings(
-                        GetAccelerateProjects(),
-                        null,                       // scripts
-                        false,                      // isEnableScript
-                        false,                      // isOnlyWorkSteamBrowser
-                        26501,                      // proxyPort
-                        "0.0.0.0",                  // proxyIp
-                        mode,                       // proxyMode
-                        false,                      // isProxyGOG
-                        false,                      // onlyEnableProxyScript
-                        false,                      // enableHttpProxyToHttps
-                        false,                      // socks5ProxyEnable
-                        26502,                      // socks5ProxyPortId
-                        false,                      // twoLevelAgentEnable
-                        ExternalProxyType.Socks5,   // twoLevelAgentProxyType
-                        null,                       // twoLevelAgentIp
-                        0,                          // twoLevelAgentPortId
-                        null,                       // twoLevelAgentUserName
-                        null,                       // twoLevelAgentPassword
-                        null,                       // proxyDNS
-                        false,                      // isSupportIpv6
-                        true,                       // useDoh
-                        null,                       // customDohAddres
-                        null);                      // proxyToken
-
-                    var result = await impl.StartProxyAsync(Serializable.SMP2(settings));
-                    global::Android.Util.Log.Info(Tag, $"StartProxy: {result.Code}");
-                }
-                catch (System.Exception ex)
-                {
-                    global::Android.Util.Log.Error(Tag, ex.ToString());
-                }
-            });
-            await _startTask;
+            // TODO: 加速项从上游配置源加载；首版内置 Steam/GitHub 常用域名
+            global::BD.WTTS.Services.WattProxyServer.Start(26501, GetAccelerateProjects());
+            global::Android.Util.Log.Info(Tag, "WattProxy started");
         }
-        finally
+        catch (System.Exception ex)
         {
-            _gate.Release();
+            global::Android.Util.Log.Error(Tag, ex.ToString());
         }
+        return Task.CompletedTask;
     }
 
-    public static async Task StopAsync()
+    public static Task StopAsync()
     {
         try
         {
-            IReverseProxyService impl = Ioc.Get<IReverseProxyService>();
-            await impl.StopProxyAsync();
+            global::BD.WTTS.Services.WattProxyServer.Stop();
+            global::Android.Util.Log.Info(Tag, "WattProxy stopped");
         }
         catch (System.Exception ex)
         {
             global::Android.Util.Log.Warn(Tag, $"StopProxy: {ex.Message}");
         }
-        await Task.CompletedTask;
+        return Task.CompletedTask;
     }
 
     /// <summary>
-    /// 导出根证书 DER 供 KeyChain 安装
+    /// 导出根证书 DER 供 KeyChain 安装（当前架构为直连分流，不做 MITM，返回 null 跳过）
     /// </summary>
-    public static byte[]? GetRootCertificateDer()
-    {
-        try
-        {
-            var cm = Ioc.Get<ICertificateManager>();
-            var bytes = cm.RootCertificatePackable;
-            if (bytes == null) return null;
-            var cert = new System.Security.Cryptography.X509Certificates.X509Certificate2(bytes);
-            return cert.Export(System.Security.Cryptography.X509Certificates.X509ContentType.Cert);
-        }
-        catch (System.Exception ex)
-        {
-            global::Android.Util.Log.Error(Tag, ex.ToString());
-            return null;
-        }
-    }
+    public static byte[]? GetRootCertificateDer() => null;
 
-    static IReadOnlyList<AccelerateProjectDTO> GetAccelerateProjects()
+    /// <summary>
+    /// 内置加速域名（首版）：Steam 社区/商店 + GitHub。
+    /// 与上游 AccelerateProjectDTO.MatchDomainNames 格式一致（空格分隔，支持 *.example.com）。
+    /// </summary>
+    static IReadOnlyList<global::BD.WTTS.Models.AccelerateProjectDTO> GetAccelerateProjects()
     {
-        // TODO: 从上游加速项配置数据源加载（远程 JSON / 本地缓存）
-        // 首版硬编码 Steam 社区 + GitHub 最小集验证链路
-        return new List<AccelerateProjectDTO>();
+        const string steamDomains = "steamcommunity.com steampowered.com steamstatic.com steamusercontent.com steamcontent.com steamserver.net";
+        const string githubDomains = "github.com githubusercontent.com githubassets.com github.io";
+        const string pixivDomains = "pixiv.net pximg.net";
+
+        return new List<global::BD.WTTS.Models.AccelerateProjectDTO>
+        {
+            new()
+            {
+                Name = "Steam 社区",
+                MatchDomainNames = steamDomains,
+                Order = 0,
+            },
+            new()
+            {
+                Name = "GitHub",
+                MatchDomainNames = githubDomains,
+                Order = 1,
+            },
+            new()
+            {
+                Name = "Pixiv",
+                MatchDomainNames = pixivDomains,
+                Order = 2,
+            },
+        };
     }
 }
