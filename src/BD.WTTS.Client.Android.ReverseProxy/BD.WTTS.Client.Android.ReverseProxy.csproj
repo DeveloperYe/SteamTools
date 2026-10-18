@@ -1,8 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<!--
-	  Android 加速核心库（纯 BCL，无 ASP.NET Core 依赖——Android 无 AspNetCore runtime pack）。
-	  提供加速域名数据、DoH/DNS 解析、以及 WattProxyServer(TcpListener HTTP CONNECT 代理+分流)。
+	  Android 加速核心库（纯 BCL）：
+	  - 加速域名数据模型（上游 DTO/枚举）
+	  - WattProxyServer：TcpListener HTTP CONNECT 代理 + DoH 分流（Android 无 AspNetCore runtime pack，不跑 Kestrel）
 	-->
 	<PropertyGroup>
 		<TargetFramework>net11.0</TargetFramework>
@@ -11,31 +12,20 @@
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<Nullable>disable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
-		<DefineConstants>ANDROID_PORT;REMOVE_DNS_INTERCEPT;NONE_UI;LIB_CLIENT_IPC;__NOT_IMPORT_COMMON_SERVICES__;__NOT_IMPORT_COMMON_PRIMITIVES__;__NOT_IMPORT_CONFIGURATION__;$(DefineConstants)</DefineConstants>
+		<DefineConstants>ANDROID_PORT;NONE_UI;$(DefineConstants)</DefineConstants>
 		<NoWarn>$(NoWarn);CA1416;CS8632;CS1998</NoWarn>
 		<EnableDefaultCompileItems>false</EnableDefaultCompileItems>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<!-- === 加速数据模型与枚举 === -->
+		<!-- 上游加速枚举 -->
 		<Compile Include="..\BD.WTTS.Client.Plugins.Accelerator.ReverseProxy\Enums\**\*.cs" LinkBase="Enums" />
-		<Compile Include="..\BD.WTTS.Client.Plugins.Accelerator.ReverseProxy\Models\FlowStatistics.cs" LinkBase="Models" />
 		<Compile Include="..\BD.WTTS.Client.Plugins.Accelerator\Enums\ProxyMode.cs" LinkBase="Enums" />
 
-		<!-- === DNS/DoH 解析（纯 BCL） === -->
-		<Compile Include="..\BD.WTTS.Client.Plugins.Accelerator.ReverseProxy\Services\INet\**\*.cs" LinkBase="Services" />
-		<Compile Include="..\BD.WTTS.Client.Plugins.Accelerator.ReverseProxy\Services\Net\**\*.cs" LinkBase="Services\Net" />
-		<Compile Include="..\BD.WTTS.Client.Plugins.Accelerator.ReverseProxy\Services.Implementation\Net\**\*.cs" LinkBase="Services.Implementation\Net" />
-		<Compile Include="..\BD.WTTS.Client.Plugins.Accelerator.ReverseProxy\Services.Implementation\DomainResolver.cs" LinkBase="Services.Implementation" />
-
-		<!-- === 共享源文件（裁剪） === -->
+		<!-- 上游共享 -->
 		<Compile Include="..\AssemblyInfo.Constants.cs" LinkBase="Properties" />
-		<Compile Include="..\ImplicitUsings.MessagePack.cs" LinkBase="Properties" />
-		<Compile Include="..\ImplicitUsings.Models.cs" LinkBase="Properties" />
-		<Compile Include="..\ImplicitUsings.Enums.cs" LinkBase="Properties" />
-		<Compile Include="..\ImplicitUsings.NLog.cs" LinkBase="Properties" />
 
-		<!-- === WattProxy 代理服务器（本工程，纯 BCL） === -->
+		<!-- WattProxy 代理服务器 -->
 		<Compile Include="WattProxy\**\*.cs" LinkBase="WattProxy" />
 	</ItemGroup>
 
@@ -43,8 +33,6 @@
 		<ProjectReference Include="..\..\ref\Common\src\BD.Common\BD.Common.csproj" />
 		<ProjectReference Include="..\..\ref\WTTS.MicroServices.ClientSDK\src\BD.WTTS.MicroServices.Primitives.Models\BD.WTTS.MicroServices.Primitives.Models.csproj" />
 		<PackageReference Include="NLog" />
-		<PackageReference Include="DnsClient" />
-		<PackageReference Include="Ae.DNS.Client" />
 	</ItemGroup>
 
 </Project>

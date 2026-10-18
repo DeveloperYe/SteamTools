@@ -15,6 +15,7 @@ using System.Buffers;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using BD.WTTS;
 using BD.WTTS.Models;
 using NLog;
 
