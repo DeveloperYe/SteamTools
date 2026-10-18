@@ -15,7 +15,6 @@
 		<DefineConstants>APP_REVERSE_PROXY;ANDROID_PORT;REMOVE_DNS_INTERCEPT;NONE_UI;LIB_CLIENT_IPC;__NOT_IMPORT_COMMON_SERVICES__;__NOT_IMPORT_COMMON_PRIMITIVES__;__NOT_IMPORT_CONFIGURATION__;$(DefineConstants)</DefineConstants>
 		<NoWarn>$(NoWarn);CA1416;CS8632;CS1998</NoWarn>
 		<EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-		<InternalsVisibleTo>WattToolkit</InternalsVisibleTo>
 	</PropertyGroup>
 
 	<ItemGroup>
