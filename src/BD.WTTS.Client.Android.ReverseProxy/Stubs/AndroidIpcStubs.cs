@@ -87,10 +87,17 @@ public sealed class AndroidPlatformService : IPCPlatformService
         return true;
     }
 
-    public void WriteAllBytes(string path, byte[] bytes) => File.WriteAllBytes(path, bytes);
+    public bool WriteAllBytes(string path, byte[] bytes)
+    {
+        File.WriteAllBytes(path, bytes);
+        return true;
+    }
 
-    public Task WriteAllBytesAsync(string path, byte[] bytes, CancellationToken cancellationToken = default) =>
-        File.WriteAllBytesAsync(path, bytes, cancellationToken);
+    public async Task<bool> WriteAllBytesAsync(string path, byte[] bytes, CancellationToken cancellationToken = default)
+    {
+        await File.WriteAllBytesAsync(path, bytes, cancellationToken);
+        return true;
+    }
 
     public string RegexSearchFile(string filePath, string pattern)
     {
