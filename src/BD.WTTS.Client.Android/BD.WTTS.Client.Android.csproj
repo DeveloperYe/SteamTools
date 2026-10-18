@@ -27,6 +27,7 @@
 		<!-- 加速核心直接拼入（避免 ProjectReference 传递 AspNetCore FrameworkReference，Android 无其 runtime pack） -->
 		<Compile Include="..\BD.WTTS.Client.Android.ReverseProxy\WattProxy\**\*.cs" LinkBase="WattProxy" />
 		<Compile Include="..\BD.WTTS.Client.Plugins.Accelerator\Enums\ProxyMode.cs" LinkBase="Enums" />
+		<Compile Include="..\AssemblyInfo.Constants.cs" LinkBase="Properties" />
 	</ItemGroup>
 
 	<ItemGroup>
