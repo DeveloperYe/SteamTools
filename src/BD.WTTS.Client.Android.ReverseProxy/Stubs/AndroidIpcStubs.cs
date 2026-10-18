@@ -140,9 +140,57 @@ public sealed class AndroidIPCSubProcessService : IPCSubProcessService
         return Task.CompletedTask;
     }
 
-    T? IPCSubProcessService.GetService<T>() where T : class => null;
+    T? IPCSubProcessService.GetService<T>() where T : class
+    {
+        if (typeof(T) == typeof(IPCPlatformService))
+            return (T)(object)AndroidPlatformService.Instance;
+        if (typeof(T) == typeof(IPCToastService))
+            return (T)(object)AndroidToastService.Instance;
+        return null;
+    }
 
     void IDisposable.Dispose()
     {
     }
+}
+
+/// <summary>
+/// Android 侧的公开工厂：上游实现类是 internal，App 工程无法直接 new。
+/// </summary>
+public static class AndroidServiceFactory
+{
+    public static ICertificateManager CreateCertificateManager() => new CertificateManagerImpl(
+        AndroidIPCSubProcessService.Instance);
+
+    public static YarpReverseProxyServiceImpl CreateReverseProxyService(
+        DnsAnalysisServiceImpl dnsAnalysisServiceImpl,
+        DnsDohAnalysisService dnsDohAnalysisService,
+        ICertificateManager certificateManager) => new YarpReverseProxyServiceImpl(
+        AndroidIPCSubProcessService.Instance,
+        dnsAnalysisServiceImpl,
+        dnsDohAnalysisService,
+        certificateManager);
+}
+
+/// <summary>
+/// Android 的 Toast stub：记录日志（UI Toast 由 App 层自行实现）。
+/// </summary>
+public sealed class AndroidToastService : IPCToastService
+{
+    public static readonly AndroidToastService Instance = new();
+
+    public void Show(IPCToastService.ToastIcon icon, IPCToastService.ToastText text, int? duration = null)
+        => NLog.LogManager.GetLogger("AndroidToast").Info("Toast: {Icon} {Text}", icon, text);
+
+    public void Show(IPCToastService.ToastIcon icon, IPCToastService.ToastText text, ToastLength duration)
+        => NLog.LogManager.GetLogger("AndroidToast").Info("Toast: {Icon} {Text}", icon, text);
+
+    public void Show(IPCToastService.ToastIcon icon, IPCToastService.ToastText text, int? duration = null, params string?[] args)
+        => NLog.LogManager.GetLogger("AndroidToast").Info("Toast: {Icon} {Text} {Args}", icon, text, args);
+
+    public void Show(IPCToastService.ToastIcon icon, IPCToastService.ToastText text, ToastLength duration, params string?[] args)
+        => NLog.LogManager.GetLogger("AndroidToast").Info("Toast: {Icon} {Text} {Args}", icon, text, args);
+
+    public void Show(IPCToastService.ToastIcon icon, IPCToastService.ToastText text, params string?[] args)
+        => NLog.LogManager.GetLogger("AndroidToast").Info("Toast: {Icon} {Text} {Args}", icon, text, args);
 }

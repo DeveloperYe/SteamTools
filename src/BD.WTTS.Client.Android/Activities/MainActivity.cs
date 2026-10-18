@@ -99,7 +99,7 @@ public class MainActivity : Activity
 
     void UpdateUi()
     {
-        _status?.SetText(_running ? "加速运行中" : "未运行");
-        _btnToggle?.SetText(_running ? "停止加速" : "开启加速");
+        _status?.Text = _running ? "加速运行中" : "未运行";
+        _btnToggle?.Text = _running ? "停止加速" : "开启加速";
     }
 }
