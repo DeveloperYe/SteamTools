@@ -1,4 +1,6 @@
 using System.Reflection;
+using BD.WTTS.Enums;
+using ProxyMode = BD.WTTS.Enums.ProxyMode;
 
 namespace BD.WTTS.Android;
 

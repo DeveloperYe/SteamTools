@@ -3,6 +3,9 @@ using Android.Content;
 using Android.Net;
 using Android.OS;
 using Java.Lang;
+using Activity = Android.App.Activity;
+using Context = Android.Content.Context;
+using Service = Android.App.Service;
 
 namespace BD.WTTS.Android;
 

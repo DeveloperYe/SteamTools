@@ -26,7 +26,8 @@
 		<Compile Include="..\BD.WTTS.Client.Plugins.Accelerator.ReverseProxy\Extensions\**\*.cs" LinkBase="Extensions" />
 
 		<!-- === 上游 BD.WTTS.Client.IPC 工程（跨平台纯 C#，保留真实 IPC 类型供编译） === -->
-		<Compile Include="..\BD.WTTS.Client.IPC\**\*.cs" LinkBase="IPC" />
+		<!-- 排除 IPC 的 ToastLength.cs：与 BD.Common.Toast 的同名类型冲突（App 工程用后者） -->
+		<Compile Include="..\BD.WTTS.Client.IPC\**\*.cs" LinkBase="IPC" Exclude="..\BD.WTTS.Client.IPC\Enums\ToastLength.cs" />
 		<Compile Include="..\BD.WTTS.Client\Services\IPC\IPCSubProcessModuleService.cs" LinkBase="Services" />
 		<Compile Include="..\BD.WTTS.Client\Services\Platform\IPC\*.cs" LinkBase="Services\Platform" />
 		<Compile Include="..\BD.WTTS.Client\Services\UI\Widgets\IPC\*.cs" LinkBase="Services\UI\Widgets" />
