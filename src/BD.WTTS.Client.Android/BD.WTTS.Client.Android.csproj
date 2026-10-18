@@ -22,6 +22,7 @@
 	<ItemGroup>
 		<!-- 反代核心：Android 拼装版（stub 掉 IPC，进程内运行） -->
 		<ProjectReference Include="..\BD.WTTS.Client.Android.ReverseProxy\BD.WTTS.Client.Android.ReverseProxy.csproj" />
+		<ProjectReference Include="..\..\ref\dotnetCampus.Ipc\src\dotnetCampus.Ipc\dotnetCampus.Ipc.csproj" />
 	</ItemGroup>
 
 </Project>
