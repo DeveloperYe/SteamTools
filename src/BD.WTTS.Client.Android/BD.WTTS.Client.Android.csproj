@@ -10,25 +10,28 @@
 		<ApplicationDisplayVersion>0.1.0</ApplicationDisplayVersion>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<DefineConstants>$(DefineConstants);ANDROID_PORT</DefineConstants>
-		<!-- Debug 签名即可自用；release 构建走 CI 里的 keystore -->
 		<AndroidKeyStore>false</AndroidKeyStore>
 		<AndroidUseAapt2>true</AndroidUseAapt2>
-		<AndroidLinkTool></AndroidLinkTool>
 		<EnableLLVM>false</EnableLLVM>
 		<RuntimeIdentifiers>android-arm64;android-x64</RuntimeIdentifiers>
 		<AndroidPackageFormat>apk</AndroidPackageFormat>
+		<EnableDefaultCompileItems>false</EnableDefaultCompileItems>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<!-- 反代核心：Android 拼装版（stub 掉 IPC，进程内运行） -->
-		<ProjectReference Include="..\BD.WTTS.Client.Android.ReverseProxy\BD.WTTS.Client.Android.ReverseProxy.csproj" />
-		<ProjectReference Include="..\..\ref\dotnetCampus.Ipc\src\dotnetCampus.Ipc\dotnetCampus.Ipc.csproj" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Console" />
+		<!-- App 源码 -->
+		<Compile Include="Activities\**\*.cs" LinkBase="Activities" />
+		<Compile Include="Services\**\*.cs" LinkBase="Services" />
+		<Compile Include="GlobalUsings.cs" />
+
+		<!-- 加速核心直接拼入（避免 ProjectReference 传递 AspNetCore FrameworkReference，Android 无其 runtime pack） -->
+		<Compile Include="..\BD.WTTS.Client.Android.ReverseProxy\WattProxy\**\*.cs" LinkBase="WattProxy" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<!-- 传递依赖带入的 AspNetCore FrameworkReference 在 Android 无 runtime pack，移除 -->
-		<FrameworkReference Remove="Microsoft.AspNetCore.App" />
+		<ProjectReference Include="..\..\ref\Common\src\BD.Common\BD.Common.csproj" />
+		<ProjectReference Include="..\..\ref\WTTS.MicroServices.ClientSDK\src\BD.WTTS.MicroServices.Primitives.Models\BD.WTTS.MicroServices.Primitives.Models.csproj" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Console" />
 	</ItemGroup>
 
 </Project>

@@ -1,7 +1,6 @@
 // Android 工程专用全局 using，并消解跨库类型歧义。
 
 global using BD.WTTS;
-global using BD.WTTS.Enums;
 global using BD.WTTS.Models;
 global using BD.WTTS.Services;
 global using Microsoft.Extensions.DependencyInjection;
