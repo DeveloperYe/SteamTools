@@ -3,13 +3,11 @@ using Android.Content;
 using Android.Net;
 using Android.OS;
 using Java.Lang;
-using Activity = Android.App.Activity;
-using Context = Android.Content.Context;
 using Service = Android.App.Service;
 
-namespace BD.WTTS.Android;
+namespace WattToolkit;
 
-[Service(Name = "bd.wtts.android.WattVpnService", Exported = false,
+[Service(Name = "watttoolkit.WattVpnService", Exported = false,
     Permission = "android.permission.BIND_VPN_SERVICE",
     ForegroundServiceType = Android.Content.PM.ForegroundService.TypeSpecialUse)]
 public class WattVpnService : Android.Net.VpnService

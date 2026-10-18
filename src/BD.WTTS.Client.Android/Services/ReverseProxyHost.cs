@@ -1,8 +1,6 @@
 using System.Reflection;
-using BD.WTTS.Enums;
-using ProxyMode = BD.WTTS.Enums.ProxyMode;
 
-namespace BD.WTTS.Android;
+namespace WattToolkit;
 
 /// <summary>
 /// 在 Android 单进程内直接运行上游 YarpReverseProxyServiceImpl 的适配层。

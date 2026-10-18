@@ -2,10 +2,8 @@ using Android.App;
 using Android.Content;
 using Android.OS;
 using Android.Widget;
-using Activity = Android.App.Activity;
-using Context = Android.Content.Context;
 
-namespace BD.WTTS.Android;
+namespace WattToolkit;
 
 [Activity(Label = "Watt Toolkit", MainLauncher = true, LaunchMode = Android.Content.PM.LaunchMode.SingleTask)]
 public class MainActivity : Activity

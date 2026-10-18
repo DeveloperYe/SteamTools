@@ -4,7 +4,7 @@
 		<TargetFramework>net11.0-android</TargetFramework>
 		<SupportedOSPlatformVersion>24</SupportedOSPlatformVersion>
 		<OutputType>Exe</OutputType>
-		<RootNamespace>BD.WTTS.Android</RootNamespace>
+		<RootNamespace>WattToolkit</RootNamespace>
 		<ApplicationId>net.steampp.watt.android</ApplicationId>
 		<ApplicationVersion>1</ApplicationVersion>
 		<ApplicationDisplayVersion>0.1.0</ApplicationDisplayVersion>

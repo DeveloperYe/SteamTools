@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace BD.WTTS.Android;
+namespace WattToolkit;
 
 /// <summary>
 /// tun2socks 运行器（xjasonlyu/tun2socks v2.7.0，Go 静态二进制）。
