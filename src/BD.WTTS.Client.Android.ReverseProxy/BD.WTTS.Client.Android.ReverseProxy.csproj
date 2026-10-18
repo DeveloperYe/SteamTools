@@ -1,0 +1,68 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<!--
+	  Android 专用反代类库：拼装上游 ReverseProxy 的核心实现文件，
+	  排除 IPC 子进程模型 / WinDivert / AppCenter / Windows 专属代码，
+	  平台依赖(IPCPlatformService 等)由本工程的 Android stub 提供。
+	-->
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<AssemblyName>Steam++.Accelerator.Android</AssemblyName>
+		<RootNamespace>BD.WTTS</RootNamespace>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<Nullable>disable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<DefineConstants>APP_REVERSE_PROXY;ANDROID_PORT;REMOVE_DNS_INTERCEPT;NONE_UI;$(DefineConstants)</DefineConstants>
+		<NoWarn>$(NoWarn);CA1416;CS8632;CS1998</NoWarn>
+		<EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- === 核心服务接口与实现（来自上游 ReverseProxy 工程）=== -->
+		<Compile Include="..\BD.WTTS.Client.Plugins.Accelerator.ReverseProxy\Enums\**\*.cs" LinkBase="Enums" />
+		<Compile Include="..\BD.WTTS.Client.Plugins.Accelerator.ReverseProxy\Models\**\*.cs" LinkBase="Models" />
+		<Compile Include="..\BD.WTTS.Client.Plugins.Accelerator.ReverseProxy\Services\**\*.cs" LinkBase="Services" />
+		<Compile Include="..\BD.WTTS.Client.Plugins.Accelerator.ReverseProxy\Services.Implementation\**\*.cs" LinkBase="Services.Implementation" />
+		<Compile Include="..\BD.WTTS.Client.Plugins.Accelerator.ReverseProxy\Extensions\**\*.cs" LinkBase="Extensions" />
+
+		<!-- === 上游共享源文件 === -->
+		<Compile Include="..\AssemblyInfo.Constants.cs" LinkBase="Properties" />
+		<Compile Include="..\ImplicitUsings.MessagePack.cs" LinkBase="Properties" />
+		<Compile Include="..\ImplicitUsings.Services.cs" LinkBase="Properties" />
+		<Compile Include="..\ImplicitUsings.MSEX.cs" LinkBase="Properties" />
+		<Compile Include="..\ImplicitUsings.Nito.cs" LinkBase="Properties" />
+		<Compile Include="..\ImplicitUsings.Models.cs" LinkBase="Properties" />
+		<Compile Include="..\ImplicitUsings.Enums.cs" LinkBase="Properties" />
+		<Compile Include="..\ImplicitUsings.NLog.cs" LinkBase="Properties" />
+		<Compile Include="..\ImplicitUsings.AspNetCore.cs" LinkBase="Properties" />
+		<Compile Include="..\BD.WTTS.Client\Constants\CertificateConstants.cs" LinkBase="Constants" />
+		<Compile Include="..\BD.WTTS.Client\Services\Mvvm\LogConsoleService.Logger.cs" LinkBase="Services\Mvvm" />
+		<Compile Include="..\BD.WTTS.Client.Plugins.Accelerator\Enums\ProxyMode.cs" LinkBase="Enums" />
+		<Compile Include="..\OSShuttingDownHelper\**\*.cs" LinkBase="OSShuttingDownHelper" />
+
+		<!-- === Android 平台 stub（本工程）=== -->
+		<Compile Include="Stubs\**\*.cs" LinkBase="Stubs" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\ref\Common\src\BD.Common.Repositories.SQLitePCL\BD.Common.Repositories.SQLitePCL.csproj" />
+		<ProjectReference Include="..\..\ref\Common\src\BD.Common\BD.Common.csproj" />
+		<ProjectReference Include="..\..\ref\WTTS.MicroServices.ClientSDK\src\BD.WTTS.MicroServices.Primitives.Models\BD.WTTS.MicroServices.Primitives.Models.csproj" />
+		<PackageReference Include="NLog" />
+		<PackageReference Include="NLog.Web.AspNetCore" />
+		<PackageReference Include="System.Linq.Async" />
+		<PackageReference Include="Ae.DNS.Client" />
+		<PackageReference Include="DNS" />
+		<PackageReference Include="DnsClient" />
+		<PackageReference Include="Yarp.ReverseProxy" />
+		<PackageReference Include="System.Drawing.Common" />
+		<PackageReference Include="System.Runtime.Caching" />
+		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
+		<PackageReference Include="Utf8StringInterpolation" />
+	</ItemGroup>
+
+</Project>

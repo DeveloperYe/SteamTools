@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0-android</TargetFramework>
+		<SupportedOSPlatformVersion>24</SupportedOSPlatformVersion>
+		<OutputType>Exe</OutputType>
+		<RootNamespace>BD.WTTS.Android</RootNamespace>
+		<ApplicationId>net.steampp.watt.android</ApplicationId>
+		<ApplicationVersion>1</ApplicationVersion>
+		<ApplicationDisplayVersion>0.1.0</ApplicationDisplayVersion>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<DefineConstants>$(DefineConstants);ANDROID_PORT</DefineConstants>
+		<!-- Debug 签名即可自用；release 构建走 CI 里的 keystore -->
+		<AndroidKeyStore>false</AndroidKeyStore>
+		<AndroidUseAapt2>true</AndroidUseAapt2>
+		<AndroidLinkTool></AndroidLinkTool>
+		<EnableLLVM>false</EnableLLVM>
+		<RuntimeIdentifiers>android-arm64;android-x64</RuntimeIdentifiers>
+		<AndroidPackageFormat>apk</AndroidPackageFormat>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- 反代核心：Android 拼装版（stub 掉 IPC，进程内运行） -->
+		<ProjectReference Include="..\BD.WTTS.Client.Android.ReverseProxy\BD.WTTS.Client.Android.ReverseProxy.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Xamarin.AndroidX.Core" Version="1.13.1.4" />
+		<PackageReference Include="Xamarin.Google.Android.Material" Version="1.11.0.3" />
+	</ItemGroup>
+
+</Project>
