@@ -62,8 +62,8 @@ jobs:
           unsigned=$(find src/BD.WTTS.Client.Android -name '*-Signed.apk' | head -1)
           echo "unsigned APK: $unsigned"
           # dotnet android workload 自带 build-tools（含 apksigner/zipalign）
-          APKSIGNER=$(find /usr/share/dotnet ~/.dotnet /usr/lib/android-sdk ~ -name apksigner -type f 2>/dev/null | sort | tail -1)
-          ZIPALIGN=$(find /usr/share/dotnet ~/.dotnet /usr/lib/android-sdk ~ -name zipalign -type f 2>/dev/null | sort | tail -1)
+          APKSIGNER=$(find /usr/local/lib/android/sdk /usr/lib/android-sdk /opt -name apksigner -type f 2>/dev/null | sort | tail -1)
+          ZIPALIGN=$(find /usr/local/lib/android/sdk /usr/lib/android-sdk /opt -name zipalign -type f 2>/dev/null | sort | tail -1)
           echo "apksigner=$APKSIGNER"
           echo "zipalign=$ZIPALIGN"
           test -n "$APKSIGNER" && test -n "$ZIPALIGN"
