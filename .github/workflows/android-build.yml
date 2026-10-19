@@ -82,7 +82,7 @@ jobs:
       - name: Locate APK
         id: apk
         run: |
-          apk=$(find src/BD.WTTS.Client.Android -name '*-Signed.apk' -o -name '*.apk' | head -1)
+          apk=$(find src/BD.WTTS.Client.Android -path "*publish*-Signed.apk" | head -1)
           echo "path=$apk" >> $GITHUB_OUTPUT
           ls -la "$apk"
 
