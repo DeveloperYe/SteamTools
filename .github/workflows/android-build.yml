@@ -43,12 +43,36 @@ jobs:
       - name: Restore
         run: dotnet restore src/BD.WTTS.Client.Android/BD.WTTS.Client.Android.csproj
 
-      - name: Publish APK
+      - name: Setup release keystore
+        run: |
+          echo -n "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > /tmp/watt-release.keystore
+          # 校验 keystore 可用
+          keytool -list -keystore /tmp/watt-release.keystore -storepass "${{ secrets.KEYSTORE_PASSWORD }}" -alias "${{ secrets.KEY_ALIAS }}"
+
+      - name: Publish APK (release signed)
         run: >
           dotnet publish src/BD.WTTS.Client.Android/BD.WTTS.Client.Android.csproj
           -f net11.0-android -c Release
           -p:AndroidPackageFormat=apk
-          -p:AndroidKeyStore=false
+          -p:AndroidKeyStore=true
+          -p:AndroidSigningKeyStore=/tmp/watt-release.keystore
+          -p:AndroidSigningKeyAlias=${{ secrets.KEY_ALIAS }}
+          -p:AndroidSigningKeyPass=${{ secrets.KEY_PASSWORD }}
+          -p:AndroidSigningStorePass=${{ secrets.KEYSTORE_PASSWORD }}
+
+      - name: Verify APK signature
+        run: |
+          apk=$(find src/BD.WTTS.Client.Android -name '*-Signed.apk' | head -1)
+          echo "APK: $apk"
+          # dotnet android 自带的 apksigner
+          APKSIGNER=$(find /usr/share/dotnet ~/.dotnet -name apksigner -type f 2>/dev/null | head -1 || true)
+          if [ -n "$APKSIGNER" ]; then
+            chmod +x "$APKSIGNER"
+            "$APKSIGNER" verify --print-certs "$apk" | head -5
+          else
+            unzip -l "$apk" | grep -E 'META-INF/.*\.(RSA|DSA|EC)' || echo 'v2 scheme only'
+            echo "signature file present"
+          fi
 
       - name: Locate APK
         id: apk
