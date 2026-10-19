@@ -67,7 +67,7 @@ jobs:
           echo "apksigner=$APKSIGNER"
           echo "zipalign=$ZIPALIGN"
           test -n "$APKSIGNER" && test -n "$ZIPALIGN"
-          chmod +x "$APKSIGNER" "$ZIPALIGN"
+          chmod +x "$APKSIGNER" "$ZIPALIGN" 2>/dev/null || true
           "$ZIPALIGN" -f -p 4 "$unsigned" /tmp/aligned.apk
           "$APKSIGNER" sign \
             --ks /tmp/watt-release.keystore \
