@@ -93,11 +93,14 @@ public class WattVpnService : Android.Net.VpnService
     {
         try
         {
+            // 先停 tun2socks（它持有 TUN fd，必须确认退出），再关接口，最后停代理
             Tun2SocksNative.Stop();
+            try { _tunInterface?.Close(); } catch { }
+            _tunInterface = null;
             ReverseProxyHost.StopAsync().Wait(TimeSpan.FromSeconds(5));
+            StopForeground(StopForegroundFlags.Remove);
         }
         catch { }
-        _tunInterface?.Close();
         base.OnDestroy();
     }
 

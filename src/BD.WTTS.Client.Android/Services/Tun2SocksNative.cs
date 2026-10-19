@@ -20,7 +20,6 @@ public static class Tun2SocksNative
         if (!File.Exists(bin))
             throw new FileNotFoundException("libtun2socks.so not in nativeLibraryDir", bin);
 
-        // tun2socks 需要 TUN fd 以 /dev/tun 形式访问：通过 /proc/self/fd/<fd> 传入
         var proxyUrl = proxyType switch
         {
             "http" => $"http://{proxyHost}:{proxyPort}",
@@ -56,17 +55,38 @@ public static class Tun2SocksNative
         _process.BeginOutputReadLine();
     }
 
+    public static bool IsRunning => _process != null && !_process.HasExited;
+
+    /// <summary>
+    /// 停止 tun2socks 并确认进程完全退出（VPN 停止的关键：
+    /// tun2socks 持有 TUN fd，进程不退出 Android 就认为 VPN 仍在运行）。
+    /// </summary>
     public static void Stop()
     {
+        var p = _process;
+        if (p == null) return;
+
         try
         {
-            if (_process != null && !_process.HasExited)
-                _process.Kill();
+            if (!p.HasExited)
+            {
+                p.Kill(entireProcessTree: true);
+                // 等待真正退出（最多 5s），确保 TUN fd 关闭
+                if (!p.WaitForExit(5000))
+                {
+                    global::Android.Util.Log.Warn(Tag, "tun2socks not exited in 5s, force kill");
+                    try { p.Kill(); } catch { }
+                    p.WaitForExit(3000);
+                }
+            }
         }
-        catch { }
+        catch (System.Exception ex)
+        {
+            global::Android.Util.Log.Error(Tag, $"Stop error: {ex}");
+        }
         finally
         {
-            _process?.Dispose();
+            p.Dispose();
             _process = null;
         }
     }

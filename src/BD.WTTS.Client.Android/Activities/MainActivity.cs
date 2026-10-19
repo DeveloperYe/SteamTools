@@ -54,8 +54,7 @@ public class MainActivity : Activity
         }
         else
         {
-            StopService(new Intent(this, typeof(WattVpnService)));
-            _running = false;
+            StopService(new Intent(this, typeof(WattVpnService)));            _running = false;
             UpdateUi();
         }
     }
