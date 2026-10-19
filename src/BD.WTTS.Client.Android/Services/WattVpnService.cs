@@ -27,6 +27,13 @@ public class WattVpnService : Android.Net.VpnService
 
     public override StartCommandResult OnStartCommand(Intent? intent, StartCommandFlags flags, int startId)
     {
+        // 显式停止意图：StopService 后 Sticky 重建时带此 intent 则不再启动
+        if (intent?.GetBooleanExtra("stop", false) == true)
+        {
+            StopSelf();
+            return StartCommandResult.NotSticky;
+        }
+
         // 前台服务通知
         var notification = new Notification.Builder(this, ChannelId)
             .SetContentTitle("Watt Toolkit")

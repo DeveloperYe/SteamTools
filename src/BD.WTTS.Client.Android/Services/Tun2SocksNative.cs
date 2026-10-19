@@ -71,18 +71,30 @@ public static class Tun2SocksNative
             if (!p.HasExited)
             {
                 p.Kill(entireProcessTree: true);
-                // 等待真正退出（最多 5s），确保 TUN fd 关闭
-                if (!p.WaitForExit(5000))
-                {
-                    global::Android.Util.Log.Warn(Tag, "tun2socks not exited in 5s, force kill");
-                    try { p.Kill(); } catch { }
-                    p.WaitForExit(3000);
-                }
             }
         }
         catch (System.Exception ex)
         {
-            global::Android.Util.Log.Error(Tag, $"Stop error: {ex}");
+            global::Android.Util.Log.Error(Tag, $"Kill error: {ex}");
+        }
+
+        try
+        {
+            // 关键：有异步输出读取线程时，必须先取消读取再等退出，
+            // 否则 WaitForExit(timeout) 只等主进程信号量，stdout 管道未排空会永远等不到退出事件
+            try { p.CancelOutputRead(); } catch { }
+            try { p.CancelErrorRead(); } catch { }
+            if (!p.WaitForExit(5000))
+            {
+                global::Android.Util.Log.Warn(Tag, "tun2socks not exited in 5s, SIGKILL");
+                try { p.Kill(); } catch { }
+                p.WaitForExit(3000);
+            }
+            global::Android.Util.Log.Info(Tag, $"tun2socks exited={p.HasExited}");
+        }
+        catch (System.Exception ex)
+        {
+            global::Android.Util.Log.Error(Tag, $"Wait error: {ex}");
         }
         finally
         {

@@ -54,7 +54,11 @@ public class MainActivity : Activity
         }
         else
         {
-            StopService(new Intent(this, typeof(WattVpnService)));            _running = false;
+            var stopIntent = new Intent(this, typeof(WattVpnService));
+            stopIntent.PutExtra("stop", true);
+            StartService(stopIntent);   // 触发 OnStartCommand 停止分支 → StopSelf
+            StopService(new Intent(this, typeof(WattVpnService)));
+            _running = false;
             UpdateUi();
         }
     }
