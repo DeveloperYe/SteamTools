@@ -45,7 +45,7 @@ public class MainActivity : Activity
             Text = "（点击「连通性测试」检查加速是否生效）",
         };
         _testOutput.SetPadding(0, 24, 0, 0);
-        _testOutput.TextIsSelectable = true;
+        _testOutput.SetTextIsSelectable(true);
         layout.AddView(_testOutput);
 
         root.AddView(layout);
@@ -81,13 +81,13 @@ public class MainActivity : Activity
         if (_testing) return;
         _testing = true;
         _btnTest!.Enabled = false;
-        _testOutput!.Text = "测试中…\n";
+        _testOutput!.Text = "测试中…";
 
         void AppendLine(string line)
         {
             RunOnUiThread(() =>
             {
-                _testOutput!.Append(line + "\n");
+                _testOutput!.Text = _testOutput!.Text + line + "\n";
                 global::Android.Util.Log.Info("ConnTest", line);
             });
         }
