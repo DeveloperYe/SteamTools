@@ -3,6 +3,7 @@ using Android.Content;
 using Android.OS;
 using Android.Widget;
 using AToast = Android.Widget.Toast;
+using ScrollView = Android.Widget.ScrollView;
 
 namespace WattToolkit;
 
@@ -11,8 +12,10 @@ public class MainActivity : Activity
 {
     Button? _btnToggle;
     TextView? _status;
-    Button? _btnCert;
+    Button? _btnTest;
+    TextView? _testOutput;
     bool _running;
+    bool _testing;
 
     const int VpnRequestCode = 0x01;
 
@@ -20,7 +23,7 @@ public class MainActivity : Activity
     {
         base.OnCreate(savedInstanceState);
 
-        // 极简布局：状态文本 + 开关按钮 + 证书安装按钮（后续再换正式 UI）
+        var root = new ScrollView(this);
         var layout = new LinearLayout(this) { Orientation = Orientation.Vertical };
         layout.SetPadding(48, 96, 48, 48);
 
@@ -32,11 +35,21 @@ public class MainActivity : Activity
         _btnToggle.Click += OnToggleClick;
         layout.AddView(_btnToggle);
 
-        _btnCert = new Button(this) { Text = "安装根证书" };
-        _btnCert.Click += OnInstallCertClick;
-        layout.AddView(_btnCert);
+        _btnTest = new Button(this) { Text = "连通性测试" };
+        _btnTest.Click += OnTestClick;
+        layout.AddView(_btnTest);
 
-        SetContentView(layout);
+        _testOutput = new TextView(this)
+        {
+            TextSize = 14,
+            Text = "（点击「连通性测试」检查加速是否生效）",
+        };
+        _testOutput.SetPadding(0, 24, 0, 0);
+        _testOutput.TextIsSelectable = true;
+        layout.AddView(_testOutput);
+
+        root.AddView(layout);
+        SetContentView(root);
         UpdateUi();
     }
 
@@ -63,25 +76,49 @@ public class MainActivity : Activity
         }
     }
 
-    void OnInstallCertClick(object? sender, System.EventArgs e)
+    async void OnTestClick(object? sender, System.EventArgs e)
     {
-        // 从 CertificateManager 导出 CA 证书并调起系统安装
-        try
+        if (_testing) return;
+        _testing = true;
+        _btnTest!.Enabled = false;
+        _testOutput!.Text = "测试中…\n";
+
+        void AppendLine(string line)
         {
-            var certBytes = ReverseProxyHost.GetRootCertificateDer();
-            if (certBytes == null)
+            RunOnUiThread(() =>
             {
-                AToast.MakeText(this, "证书尚未生成，先开启一次加速", AToastLength.Long)?.Show();
-                return;
-            }
-            var install = Android.Security.KeyChain.CreateInstallIntent();
-            install.PutExtra(Android.Security.KeyChain.ExtraCertificate, certBytes);
-            StartActivity(install);
+                _testOutput!.Append(line + "\n");
+                global::Android.Util.Log.Info("ConnTest", line);
+            });
         }
-        catch (System.Exception ex)
+
+        AppendLine(_running
+            ? "【VPN 运行中】以下端到端测试走真实加速路径"
+            : "【VPN 未开启】端到端测试走的是直连（对比基准）");
+
+        var tcs = new TaskCompletionSource();
+        _ = Task.Run(async () =>
         {
-            AToast.MakeText(this, ex.Message, AToastLength.Long)?.Show();
-        }
+            try
+            {
+                await ConnectivityTester.RunAllAsync(r =>
+                {
+                    var mark = r.Ok ? "✓" : "✗";
+                    AppendLine($"{mark} {r.Name}  {r.ElapsedMs}ms  {r.Detail}");
+                });
+                tcs.TrySetResult();
+            }
+            catch (System.Exception ex)
+            {
+                AppendLine($"测试异常: {ex.Message}");
+                tcs.TrySetException(ex);
+            }
+        });
+        await tcs.Task;
+
+        AppendLine("—— 测试完成 ——");
+        _btnTest.Enabled = true;
+        _testing = false;
     }
 
     protected override void OnActivityResult(int requestCode, Result resultCode, Intent? data)
@@ -102,7 +139,7 @@ public class MainActivity : Activity
 
     void UpdateUi()
     {
-        _status?.Text = _running ? "加速运行中" : "未运行";
-        _btnToggle?.Text = _running ? "停止加速" : "开启加速";
+        _status?.SetText(_running ? "加速运行中" : "未运行");
+        _btnToggle?.SetText(_running ? "停止加速" : "开启加速");
     }
 }
